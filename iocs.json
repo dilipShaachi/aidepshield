@@ -1,0 +1,57 @@
+{
+  "version": "1.0.0",
+  "updated": "2026-03-25",
+  "source": "AIDepShield community IOC feed — https://aidepshield.dev/iocs",
+  "incidents": [
+    {
+      "id": "AIDS-2026-001",
+      "name": "TeamPCP LiteLLM Supply Chain Attack",
+      "date": "2026-03-24",
+      "severity": "critical",
+      "attack_vector": "CI/CD pipeline compromise via GitHub Actions",
+      "c2_domains": ["checkmarx.zone"],
+      "kill_switch_domains": ["youtube.com"],
+      "malicious_files": ["litellm_init.pth"],
+      "affected_packages": [
+        {
+          "name": "litellm",
+          "compromised_versions": ["1.65.3-post1", "1.65.4-post1"],
+          "safe_versions": ["1.65.2", "1.65.5"],
+          "indicators": ["litellm_init.pth", "checkmarx.zone C2 beacon"],
+          "description": "Credential theft via malicious .pth file injected through GitHub Actions compromise",
+          "references": [
+            "https://socket.dev/blog/litellm-attack",
+            "https://www.microsoft.com/en-us/security/blog/2026/03/24/teampcp-supply-chain"
+          ]
+        }
+      ]
+    }
+  ],
+  "safe_version_registry": {
+    "litellm": {
+      "verified_safe": ["1.65.2", "1.65.5", "1.66.0"],
+      "compromised": ["1.65.3-post1", "1.65.4-post1"],
+      "last_verified": "2026-03-25"
+    }
+  },
+  "ioc_signatures": [
+    {
+      "type": "filename",
+      "value": "litellm_init.pth",
+      "severity": "critical",
+      "description": "Malicious .pth file used for persistent code execution"
+    },
+    {
+      "type": "domain",
+      "value": "checkmarx.zone",
+      "severity": "critical",
+      "description": "TeamPCP C2 command and control domain"
+    },
+    {
+      "type": "domain",
+      "value": "youtube.com",
+      "severity": "info",
+      "description": "Kill switch domain — if unreachable, malware activates"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+name: AIDepShield Scan
+description: Ship code, not malware.
+inputs:
+  requirements_file:
+    default: requirements.txt
+  api_url:
+    default: https://api.aidepshield.dev
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        curl -sf "${{ inputs.api_url }}/scan" -X POST -H "Content-Type: application/json" \
+          -d "{\"requirements\":\"$(paste -s -d'|' ${{ inputs.requirements_file }})\"}" | \
+        python3 -c "
+        import json,sys
+        d=json.load(sys.stdin)
+        [print(('✓' if r['status']=='SAFE' else '✗'),r['package'],r.get('version',''),r['status']) for r in d['results']]
+        print(d['summary'])
+        critical={'critical','high'}
+        sys.exit(1 if any(r.get('severity') in critical for r in d['results']) else 0)
+        "

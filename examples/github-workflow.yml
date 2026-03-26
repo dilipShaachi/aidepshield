@@ -1,0 +1,13 @@
+name: Supply Chain Security
+
+on: [push, pull_request]
+
+jobs:
+  aidepshield:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan AI dependencies for supply chain attacks
+        uses: aidepshield/aidepshield@v1
+        with:
+          requirements_file: requirements.txt
