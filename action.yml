@@ -1,0 +1,92 @@
+name: AIDepShield
+description: Ship code, not malware. Real-time AI supply chain IOC scanning.
+author: dilipShaachi
+
+branding:
+  icon: shield
+  color: red
+
+inputs:
+  requirements_file:
+    description: Path to requirements.txt file
+    required: false
+    default: requirements.txt
+  fail_on_severity:
+    description: Fail build if severity >= this level (critical, high, medium, low)
+    required: false
+    default: high
+  api_url:
+    description: AIDepShield API endpoint
+    required: false
+    default: https://aidepshield-production.up.railway.app
+
+runs:
+  using: composite
+  steps:
+    - name: Run AIDepShield scan
+      shell: bash
+      run: |
+        echo "🛡️  AIDepShield — Ship code, not malware."
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+        REQ_FILE="${{ inputs.requirements_file }}"
+        API_URL="${{ inputs.api_url }}"
+        FAIL_ON="${{ inputs.fail_on_severity }}"
+
+        if [ ! -f "$REQ_FILE" ]; then
+          echo "⚠️  No requirements file found at $REQ_FILE — skipping scan."
+          exit 0
+        fi
+
+        echo "📦 Scanning $REQ_FILE ..."
+        echo ""
+
+        # Send requirements.txt contents to the API
+        REQUIREMENTS=$(cat "$REQ_FILE")
+        RESPONSE=$(curl -s -X POST "$API_URL/scan" \
+          -H "Content-Type: application/json" \
+          -d "{\"requirements\": $(echo "$REQUIREMENTS" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))')}")
+
+        if [ $? -ne 0 ]; then
+          echo "❌ Failed to reach AIDepShield API at $API_URL"
+          exit 1
+        fi
+
+        # Print results
+        echo "$RESPONSE" | python3 - <<'PYEOF'
+        import json, sys
+
+        data = json.load(sys.stdin)
+        results = data.get("results", [])
+        severity_order = {"critical": 4, "high": 3, "medium": 2, "low": 1, "none": 0}
+        fail_on = "$FAIL_ON"
+
+        compromised = []
+        for r in results:
+            icon = "✓" if r["status"] == "SAFE" else ("✗" if r["status"] == "COMPROMISED" else "?")
+            ver = r.get("version") or "unknown"
+            print(f"  {icon}  {r['package']:<25} {ver:<15} {r['status']}")
+            if r["status"] == "COMPROMISED":
+                compromised.append(r)
+                if r.get("ioc"):
+                    print(f"       ↳ IOC: {r['ioc']}")
+                if r.get("report_url"):
+                    print(f"       ↳ Report: {r['report_url']}")
+
+        print("")
+        print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        print(data.get("summary", ""))
+
+        if compromised:
+            sys.exit(1)
+        PYEOF
+
+        EXIT_CODE=$?
+        if [ $EXIT_CODE -ne 0 ]; then
+          echo ""
+          echo "🚨 Build blocked by AIDepShield. Remove or update the compromised package(s)."
+          echo "   Full IOC feed: $API_URL/iocs"
+          exit 1
+        fi
+
+        echo "✅ Stack is clean. Ship it."

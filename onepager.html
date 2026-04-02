@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AIDepShield — One Pager</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #0a0a0a;
+    color: #f0f0f0;
+    width: 210mm;
+    min-height: 297mm;
+    padding: 32px 40px;
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 2px solid #e63946;
+    padding-bottom: 20px;
+    margin-bottom: 28px;
+  }
+  .logo { font-size: 32px; font-weight: 800; color: #fff; letter-spacing: -1px; }
+  .logo span { color: #e63946; }
+  .tagline { font-size: 13px; color: #aaa; margin-top: 4px; }
+  .badge {
+    background: #e63946;
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .hook-box {
+    background: #1a1a1a;
+    border-left: 4px solid #e63946;
+    padding: 18px 22px;
+    margin-bottom: 28px;
+    border-radius: 0 8px 8px 0;
+  }
+  .hook-box p { font-size: 15px; line-height: 1.7; color: #ddd; }
+  .hook-box strong { color: #fff; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 28px; }
+  .card {
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 10px;
+    padding: 20px;
+  }
+  .card h3 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #e63946;
+    margin-bottom: 10px;
+    font-weight: 700;
+  }
+  .card p, .card li { font-size: 13px; color: #ccc; line-height: 1.7; }
+  .card ul { padding-left: 16px; }
+  .terminal {
+    background: #0d0d0d;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 28px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 12px;
+  }
+  .terminal .prompt { color: #888; }
+  .terminal .cmd { color: #79c0ff; }
+  .terminal .safe { color: #56d364; }
+  .terminal .fail { color: #e63946; }
+  .terminal .dim { color: #555; }
+  .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+  .metric {
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+  }
+  .metric .number { font-size: 26px; font-weight: 800; color: #e63946; }
+  .metric .label { font-size: 11px; color: #888; margin-top: 4px; }
+  .roadmap { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 28px; }
+  .step {
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 8px;
+    padding: 12px 10px;
+    text-align: center;
+  }
+  .step .icon { font-size: 20px; margin-bottom: 6px; }
+  .step .title { font-size: 11px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+  .step .sub { font-size: 10px; color: #888; }
+  .step.highlight { border-color: #e63946; }
+  .pricing { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 28px; }
+  .plan {
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 10px;
+    padding: 20px;
+  }
+  .plan.featured { border-color: #e63946; }
+  .plan .price { font-size: 28px; font-weight: 800; color: #fff; }
+  .plan .price span { font-size: 14px; color: #888; font-weight: 400; }
+  .plan .name { font-size: 12px; color: #e63946; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; font-weight: 700; }
+  .plan ul { list-style: none; padding: 0; margin-top: 12px; }
+  .plan ul li { font-size: 12px; color: #ccc; padding: 3px 0; }
+  .plan ul li::before { content: "✓ "; color: #56d364; }
+  .footer {
+    border-top: 1px solid #222;
+    padding-top: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .footer .links { font-size: 12px; color: #888; }
+  .footer .links a { color: #79c0ff; text-decoration: none; margin-left: 16px; }
+  .footer .contact { font-size: 12px; color: #888; }
+  .quote {
+    font-size: 13px;
+    font-style: italic;
+    color: #aaa;
+    margin-top: 6px;
+  }
+  .competitors {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 10px;
+  }
+  .comp {
+    background: #1a1a1a;
+    border-radius: 6px;
+    padding: 10px 12px;
+  }
+  .comp .name { font-size: 12px; font-weight: 700; color: #fff; }
+  .comp .miss { font-size: 11px; color: #e63946; margin-top: 3px; }
+  .comp .note { font-size: 11px; color: #888; margin-top: 2px; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div>
+    <div class="logo">AI<span>Dep</span>Shield</div>
+    <div class="tagline">Ship code, not malware.</div>
+  </div>
+  <div class="badge">🛡 AI Supply Chain Security</div>
+</div>
+
+<!-- HOOK -->
+<div class="hook-box">
+  <p>Last week, <strong>LiteLLM was compromised</strong> — 97 million downloads. The attack injected a malicious file via GitHub Actions CI/CD that auto-executed on Python import, beaconing credentials to an attacker's server. <strong>Socket and Snyk both missed it.</strong> AIDepShield is the first scanner built specifically for the AI library threat surface.</p>
+</div>
+
+<!-- KEY METRICS -->
+<div class="metrics">
+  <div class="metric">
+    <div class="number">97M</div>
+    <div class="label">Downloads affected<br>in LiteLLM attack</div>
+  </div>
+  <div class="metric">
+    <div class="number">0</div>
+    <div class="label">Existing scanners<br>caught it</div>
+  </div>
+  <div class="metric">
+    <div class="number">27M</div>
+    <div class="label">Developers worldwide<br>at risk</div>
+  </div>
+  <div class="metric">
+    <div class="number">$8.5B</div>
+    <div class="label">Snyk valuation<br>(comparable exit)</div>
+  </div>
+</div>
+
+<!-- PROBLEM + SOLUTION -->
+<div class="grid">
+  <div class="card">
+    <h3>⚠️ The Problem</h3>
+    <ul>
+      <li>AI libraries release faster than CVE databases track</li>
+      <li>They run with deep access in production ML pipelines</li>
+      <li>Extremely high-value targets: model weights, API keys, training data</li>
+      <li>Generalist scanners (Socket, Snyk) weren't built for this threat surface</li>
+    </ul>
+    <div class="competitors" style="margin-top:14px">
+      <div class="comp">
+        <div class="name">Socket.dev</div>
+        <div class="miss">❌ Missed LiteLLM</div>
+        <div class="note">Breadth-first, not AI-focused</div>
+      </div>
+      <div class="comp">
+        <div class="name">Snyk</div>
+        <div class="miss">❌ Missed LiteLLM</div>
+        <div class="note">CVE-based, slow to update</div>
+      </div>
+      <div class="comp">
+        <div class="name">AIDepShield</div>
+        <div class="miss" style="color:#56d364">✅ Catches it</div>
+        <div class="note">AI-native, IOC-first</div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>🛡 The Solution</h3>
+    <ul>
+      <li><strong style="color:#fff">Real-time IOC feed</strong> — curated for AI libraries, updated as attacks are confirmed</li>
+      <li><strong style="color:#fff">GitHub Action</strong> — 10-line YAML, scans every push and PR</li>
+      <li><strong style="color:#fff">CI/CD Sentinel (v2)</strong> — monitors your GitHub Actions pipeline itself</li>
+      <li><strong style="color:#fff">Next Target Prediction</strong> — flags 20 at-risk AI libs before they're hit</li>
+      <li><strong style="color:#fff">Enterprise SBOM</strong> — full AI bill of materials, compliance-ready</li>
+    </ul>
+  </div>
+</div>
+
+<!-- TERMINAL DEMO -->
+<div class="terminal">
+  <div class="dim">$ curl -X POST https://api.aidepshield.dev/scan \</div>
+  <div class="dim" style="padding-left:20px">-d '{"packages": [{"name": "litellm", "version": "1.65.3-post1"}]}'</div>
+  <br>
+  <div style="color:#555">──────────────────────────────────────────────────────────</div>
+  <div class="prompt">AIDepShield v1  – scanning 1 package...</div>
+  <br>
+  <div>  <span class="fail">✗  litellm          1.65.3-post1    COMPROMISED</span></div>
+  <div style="color:#888;padding-left:5px">     litellm_init.pth · checkmarx.zone C2 beacon · AIDS-2026-001</div>
+  <br>
+  <div style="color:#555">──────────────────────────────────────────────────────────</div>
+  <div class="fail">FAIL — MALICIOUS CODE DETECTED  ⏱ 1.4s</div>
+</div>
+
+<!-- ROADMAP -->
+<div style="margin-bottom:10px; font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#888;">🗺 V2 Roadmap</div>
+<div class="roadmap" style="margin-bottom:28px">
+  <div class="step highlight">
+    <div class="icon">🔴</div>
+    <div class="title">CI/CD Sentinel</div>
+    <div class="sub">Monitors GitHub Actions pipeline integrity</div>
+  </div>
+  <div class="step highlight">
+    <div class="icon">🎯</div>
+    <div class="title">Next Target</div>
+    <div class="sub">20 at-risk AI libs predicted</div>
+  </div>
+  <div class="step">
+    <div class="icon">✅</div>
+    <div class="title">Safe Registry</div>
+    <div class="sub">Verified safe version database</div>
+  </div>
+  <div class="step">
+    <div class="icon">📡</div>
+    <div class="title">Live IOC Feed</div>
+    <div class="sub">Real-time, community-sourced</div>
+  </div>
+  <div class="step">
+    <div class="icon">💼</div>
+    <div class="title">Enterprise SBOM</div>
+    <div class="sub">$299/mo — compliance ready</div>
+  </div>
+</div>
+
+<!-- PRICING -->
+<div class="pricing">
+  <div class="plan">
+    <div class="name">Open Source</div>
+    <div class="price">$0</div>
+    <ul>
+      <li>Free IOC feed forever</li>
+      <li>/scan API</li>
+      <li>GitHub Action</li>
+      <li>Docker self-host</li>
+      <li>MIT licensed</li>
+    </ul>
+  </div>
+  <div class="plan featured">
+    <div class="name">Enterprise</div>
+    <div class="price">$299 <span>/mo</span></div>
+    <ul>
+      <li>Everything in Open Source</li>
+      <li>CI/CD Integrity Sentinel</li>
+      <li>Full AI SBOM (compliance-ready)</li>
+      <li>Next Target Predictions</li>
+      <li>SLA + dedicated support</li>
+    </ul>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <div class="links">
+    <span style="color:#e63946; font-weight:700">AIDepShield</span>
+    <a href="https://github.com/dilipShaachi/aidepshield">github.com/dilipShaachi/aidepshield</a>
+    <a href="mailto:dilip@shaachi.com">dilip@shaachi.com</a>
+  </div>
+  <div class="contact" style="color:#555; font-size:11px">Launched March 26, 2026 · MIT Licensed · Pre-revenue</div>
+</div>
+
+</body>
+</html>
