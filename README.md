@@ -176,6 +176,37 @@ Add your own packages in `data/watchlist.yaml`.
 
 ---
 
+## FAQ
+
+**How is this different from Snyk or Socket.dev?**
+They scan your dependency tree for known CVEs. AIDepShield scans your CI/CD workflows for the patterns that enable novel attacks — unpinned action refs, write-all permissions, secrets on untrusted triggers, publish without provenance. Different layer, complementary tool.
+
+**Why not just pin my GitHub Actions?**
+You should. GHA001 catches when you don't. But pinning alone doesn't catch secrets exposure on `pull_request_target`, excessive write permissions, remote script execution, or publishing without attestation. The sentinel covers the full workflow attack surface.
+
+**How do you keep the IOC database current?**
+Analyst-reviewed feed plus automated PyPI monitoring. We don't pretend this is fully autonomous malware detection — confidence matters more than coverage. New incidents are added as they're confirmed, not guessed.
+
+**What happens when a package isn't in your database?**
+In V2, unknown packages/versions default to `REVIEW`, not `SAFE`. If we haven't verified it, we say so. V1 silently passed unknowns — that's the kind of false confidence that gets people burned.
+
+**What's the false positive rate?**
+The sentinel rules are deterministic pattern matching, not heuristics — if it flags `write-all`, your workflow has `write-all`. For dependencies, compromised versions are confirmed incidents, not predictions. The `REVIEW` verdict exists specifically so we never call something `SAFE` that we haven't verified.
+
+**Will this slow down my CI/CD pipeline?**
+The scan takes under 2 seconds. It's a single API call with your requirements and workflow YAML. No heavy analysis, no sandbox detonation.
+
+**Can I self-host it?**
+Yes. `docker run -p 8080:8080 aidepshield/aidepshield:v2` — your code never leaves your infrastructure.
+
+**Why only Python/PyPI?**
+AI supply chain attacks are concentrated in the Python ecosystem right now (LiteLLM, the Trivy/Checkmarx chain). We're going deep on one ecosystem rather than shallow on five. npm/Go support is on the roadmap once Python coverage is solid.
+
+**Is the IOC feed really free forever?**
+Yes. `GET /iocs` is free, no auth, no rate limit. The trust registry and CI/CD sentinel are the premium layer.
+
+---
+
 ## Development
 
 ```bash
