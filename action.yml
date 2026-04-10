@@ -1,5 +1,5 @@
-name: AIDepShield
-description: Ship code, not malware. Real-time AI supply chain IOC scanning.
+name: AIDepShield V2
+description: "Ship code, not malware. Scan dependencies AND CI/CD workflows for supply chain risks."
 author: dilipShaachi
 
 branding:
@@ -11,10 +11,18 @@ inputs:
     description: Path to requirements.txt file
     required: false
     default: requirements.txt
-  fail_on_severity:
+  workflow_glob:
+    description: Glob pattern for workflow files to scan
+    required: false
+    default: .github/workflows/*.yml
+  fail_on:
     description: Fail build if severity >= this level (critical, high, medium, low)
     required: false
     default: high
+  strict_unknowns:
+    description: Treat unknown/unverified packages as REVIEW instead of SAFE
+    required: false
+    default: "true"
   api_url:
     description: AIDepShield API endpoint
     required: false
@@ -23,69 +31,158 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Run AIDepShield scan
+    - name: Run AIDepShield V2 scan
       shell: bash
       run: |
         set -euo pipefail
 
-        echo "AIDepShield - Ship code, not malware."
-        echo "--------------------------------------------------"
+        echo ""
+        echo "AIDepShield v2 — release safety sweep"
+        echo "-------------------------------------"
 
         REQ_FILE="${{ inputs.requirements_file }}"
+        WORKFLOW_GLOB="${{ inputs.workflow_glob }}"
         API_URL="${{ inputs.api_url }}"
+        FAIL_ON="${{ inputs.fail_on }}"
+        STRICT="${{ inputs.strict_unknowns }}"
 
-        if [ ! -f "$REQ_FILE" ]; then
-          echo "WARNING: No requirements file found at $REQ_FILE - skipping scan."
+        # Build the scan payload
+        python3 << 'PYEOF'
+        import json, sys, glob, os
+
+        payload = {"options": {"strict_unknowns": "${{ inputs.strict_unknowns }}" == "true", "include_recommendations": True}}
+
+        # Read requirements
+        req_file = "${{ inputs.requirements_file }}"
+        if os.path.isfile(req_file):
+            with open(req_file) as f:
+                payload["requirements"] = f.read()
+            print(f"  Found requirements: {req_file}")
+        else:
+            print(f"  No requirements file at {req_file}")
+
+        # Read workflow files
+        workflow_glob = "${{ inputs.workflow_glob }}"
+        wf_files = glob.glob(workflow_glob) + glob.glob(workflow_glob.replace(".yml", ".yaml"))
+        workflows = []
+        for wf in set(wf_files):
+            with open(wf) as f:
+                workflows.append({"path": wf, "content": f.read()})
+            print(f"  Found workflow: {wf}")
+
+        if workflows:
+            payload["workflows"] = workflows
+
+        if not payload.get("requirements") and not payload.get("workflows"):
+            print("WARNING: No requirements or workflows found — nothing to scan.")
+            sys.exit(0)
+
+        with open("/tmp/aidep_payload.json", "w") as f:
+            json.dump(payload, f)
+        PYEOF
+
+        if [ ! -f /tmp/aidep_payload.json ]; then
           exit 0
         fi
 
-        echo "Scanning $REQ_FILE ..."
         echo ""
-
-        # Build JSON payload safely
-        REQUIREMENTS=$(cat "$REQ_FILE")
-        PAYLOAD=$(python3 -c "import json, sys; print(json.dumps({'requirements': sys.stdin.read()}))" <<< "$REQUIREMENTS")
 
         # Call the API
         HTTP_CODE=$(curl -s -o /tmp/aidep_response.json -w "%{http_code}" \
           -X POST "$API_URL/scan" \
           -H "Content-Type: application/json" \
-          -d "$PAYLOAD")
+          -d @/tmp/aidep_payload.json)
 
         if [ "$HTTP_CODE" != "200" ]; then
           echo "ERROR: AIDepShield API returned HTTP $HTTP_CODE"
-          cat /tmp/aidep_response.json || true
+          cat /tmp/aidep_response.json 2>/dev/null || true
           exit 1
         fi
 
-        # Parse and display results
+        # Parse and display V2 results
         python3 << 'PYEOF'
         import json, sys
 
         with open("/tmp/aidep_response.json") as f:
             data = json.load(f)
 
-        results = data.get("results", [])
-        compromised = []
+        verdict = data.get("verdict", "UNKNOWN")
+        dep_results = data.get("dependency_results", [])
+        wf_results = data.get("workflow_results", [])
+        pkgs_scanned = data.get("packages_scanned", 0)
+        wfs_scanned = data.get("workflows_scanned", 0)
 
-        for r in results:
-            status = r["status"]
-            icon = "PASS" if status == "SAFE" else ("FAIL" if status == "COMPROMISED" else "WARN")
-            ver = r.get("version") or "unknown"
-            print(f"  [{icon}]  {r['package']:<25} {ver:<15} {status}")
-            if status == "COMPROMISED":
-                compromised.append(r)
+        print(f"Dependencies scanned: {pkgs_scanned}")
+        print(f"Workflow files scanned: {wfs_scanned}")
+        print("")
+
+        # Severity threshold
+        fail_on = "${{ inputs.fail_on }}"
+        severity_order = {"critical": 5, "high": 4, "medium": 3, "low": 2, "info": 1, "none": 0}
+        threshold = severity_order.get(fail_on, 4)
+
+        should_fail = False
+        issues = []
+
+        # Show dependency results
+        for r in dep_results:
+            v = r.get("verdict", "UNKNOWN")
+            sev = r.get("severity", "none")
+            ver = r.get("version") or "any"
+            pkg = r.get("package", "?")
+
+            if v == "FAIL":
+                icon = "FAIL"
+                should_fail = True
+            elif v == "REVIEW":
+                icon = "REVIEW"
+                if severity_order.get(sev, 0) >= threshold:
+                    should_fail = True
+            else:
+                icon = "SAFE"
+
+            line = f"  [{icon}]  {pkg:<25} {ver:<15} {sev}"
+            print(line)
+
+            if v in ("FAIL", "REVIEW"):
+                issues.append(f"- {pkg} {ver} — {r.get('status', '').upper()} ({sev})")
                 if r.get("ioc"):
                     print(f"         IOC: {r['ioc']}")
-                if r.get("report_url"):
-                    print(f"         Report: {r['report_url']}")
+                if r.get("recommendation"):
+                    print(f"         Fix: {r['recommendation']}")
+
+        # Show workflow findings
+        for f in wf_results:
+            rule = f.get("rule_id", "")
+            title = f.get("title", "")
+            sev = f.get("severity", "medium")
+            filepath = f.get("file", "")
+
+            if severity_order.get(sev, 0) >= threshold:
+                should_fail = True
+
+            line_num = f.get("line", "")
+            loc = f"{filepath}:{line_num}" if line_num else filepath
+            print(f"  [{rule}]  {loc:<35} {title} ({sev})")
+            issues.append(f"- {loc} — {rule} {title} ({sev})")
+
+            if f.get("recommended_fix"):
+                print(f"         Fix: {f['recommended_fix']}")
 
         print("")
-        print("--------------------------------------------------")
+        print("-------------------------------------")
+        print(f"Verdict: {verdict}")
         print(data.get("summary", ""))
 
-        if compromised:
+        if data.get("recommendation"):
             print("")
-            print("Build blocked. Remove or update the compromised package(s).")
+            print(f"Recommended action: {data['recommendation']}")
+
+        if should_fail:
+            print("")
+            print("Build blocked. Fix the issues above before releasing.")
             sys.exit(1)
+        else:
+            print("")
+            print("All clear. Ship it.")
         PYEOF
